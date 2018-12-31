@@ -4,13 +4,12 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-okpy = "*"
 "beautifulsoup4" = "*"
 plac = "*"
 pandas = "*"
 tqdm = "*"
 grequests = "*"
-requests = "*"
+requests = ">=2.20.0"
 numpy = "*"
 seaborn = "*"
 tables = "*"
