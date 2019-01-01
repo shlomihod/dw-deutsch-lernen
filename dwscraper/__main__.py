@@ -1,4 +1,4 @@
-from dwscraper.__main__ import main
+    save_dataframes(path, page_df, text_df, paragraph_df)
 
 
 if __name__ == "__main__":

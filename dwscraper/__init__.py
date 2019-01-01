@@ -6,20 +6,22 @@ import logging
 from dwscraper.pipeline import (build_page_df,
                                 build_text_df,
                                 build_paragraph_df)
-
 from dwscraper.utils import save_dataframes
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 
-def scrap_dw(n_pages, verbose=False):
+def scrap_dw(n_pages,
+             n_parallel_requests=None,
+             verbose=False):
 
      logging_level = logging.INFO if verbose else logging.WARNING
      logging.basicConfig(stream=sys.stdout,
                          level=logging_level)
 
-     page_df = build_page_df(n_pages)
+     page_df = build_page_df(n_pages,
+                             n_parallel_requests=n_parallel_requests)
 
      text_df = build_text_df(page_df)
 

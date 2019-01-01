@@ -28,17 +28,20 @@ $ pipenv run python scrap_dw.py
 ```
 
 ```
-usage: scrap_dw.py [-h] [-v] [path] [n_pages]
+usage: scrap_dw.py [-h] [-v] [-r 5] [path] [n_pages]
 
 Scrap Deutsch Lernen articles from DW website.
 
 positional arguments:
-  path           Path to save data frames
-  n_pages        Number of pages (~articles) to sample (integer or 'all'
+  path                  Path to save dataframes
+  n_pages               Number of pages (~articles) to sample (integer or
+                        'all'
 
 optional arguments:
-  -h, --help     show this help message and exit
-  -v, --verbose  Whether to print additional information
+  -h, --help            show this help message and exit
+  -v, --verbose         Whether to print additional information
+  -r 5, --n-parallel-requests 5
+                        Number of parallel download requests
 ```
 
 ## Resulted Data
@@ -82,3 +85,4 @@ with pd.HDFStore('dw.h5') as dw_store:
 
 - [ ] Convert to a Python package
 - [ ] Better documentation of the data frames' columns
+- [ ] Replace grequest with better options for downloading web-pages

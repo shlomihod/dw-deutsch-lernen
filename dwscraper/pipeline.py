@@ -13,13 +13,16 @@ from dwscraper.utils import tqdm_is_logged, oncify_newline_spaces
 logger = logging.getLogger(__name__)
 
 
-def build_page_df(n_pages=None, to_filter=True):
+def build_page_df(n_pages=None,
+                  to_filter=True,
+                  n_parallel_requests=None):
+
     page_df = fetchers.initialize_page_df()
 
     if n_pages is not None:
         page_df = page_df.sample(n=int(n_pages))
 
-    page_df = fetchers.fetch_html(page_df)
+    page_df = fetchers.fetch_html(page_df, n_parallel_requests)
     page_df = page.soupify(page_df)
 
     page_df = page.enrich_with_lektionen_page_df(page_df)

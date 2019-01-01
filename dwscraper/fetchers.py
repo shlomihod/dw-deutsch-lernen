@@ -18,12 +18,10 @@ from bs4 import BeautifulSoup
 import pandas as pd
 
 from dwscraper.utils import batches, exception_handler, tqdm_is_logged
-from dwscraper.consts import LEVELS
+from dwscraper.consts import LEVELS, DEFAULT_NUM_PARALLEL_REQUESTS
 
 
 INF = float("inf")
-
-NUM_PARALLEL_REQUESTS = 5
 
 DW_URL = "http://www.dw.com"
 DW_URL_SEARCH_FORMAT = DW_URL + "/search/?{item_field}{content_type_field}languageCode=de&searchNavigationId={rubrik}&to={to}&sort=DATE&resultsCounter={counter}"
@@ -124,16 +122,21 @@ def initialize_page_df():
     return page_df
 
 
-def fetch_html(df):
+def fetch_html(df, n_parallel_requests):
     logger.info("Retrieving all the pages ({})...".format(len(df)))
+    
+    if n_parallel_requests is None:
+        n_parallel_requests = DEFAULT_NUM_PARALLEL_REQUESTS
 
-    n_iters = len(df)//NUM_PARALLEL_REQUESTS + 1
+    logger.debug("n_parallel_requests = {}".format(n_parallel_requests))
+    
+    n_iters = len(df)//n_parallel_requests + 1
     failed_requests = []
     rs = []
 
     pbar = tqdm_is_logged(logger.level <= logging.INFO, total=n_iters)
 
-    for batch in pbar(batches(df["url"], NUM_PARALLEL_REQUESTS)):
+    for batch in pbar(batches(df["url"], n_parallel_requests)):
         requests_list = [grequests.get(DW_URL + url, stream=False) for url in batch]
         responses = grequests.map(requests_list, exception_handler=exception_handler)
 
