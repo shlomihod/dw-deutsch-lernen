@@ -8,10 +8,15 @@ logger = logging.getLogger(__name__)
 
 
 def _bs_parse_html(html):
-    return BeautifulSoup(html, "lxml")
+    try:
+        soup = BeautifulSoup(html, "lxml")
+    except Exception:  # TODO: REALLY BAD!
+        logger.warn("Failed BS parsing!")
+        soup = BeautifulSoup()
+    return soup
 
 
-def soupify(df, is_parallel=True):
+def soupify(df, is_parallel=False):
     logging.info("Instantiating soup objects...")
 
     if is_parallel:
