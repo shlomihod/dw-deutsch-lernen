@@ -184,7 +184,6 @@ def fetch_html(df, n_parallel_requests):
         df["html"] = _fetch_and_extract_html_serial(df["url"])
 
     logger.info("Trying to retrieving failed ones...")
-    import pdb; pdb.set_trace()
     df["html"] = _fetch_and_extract_html_serial(df["url"], df["html"])
 
     is_full_html_mask = df["html"].str.strip().str.endswith(b"</html>")
