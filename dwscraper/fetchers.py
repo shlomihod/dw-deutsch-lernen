@@ -79,7 +79,7 @@ def get_dw_urls(rubrik, limit=INF, **kwargs):
 
         r = requests.get(dw_url)
 
-        soup = BeautifulSoup(r.content, "html.parser")
+        soup = BeautifulSoup(r.content, "lxml")
 
         search_results = soup.find_all(class_="searchResult")
         if search_results:

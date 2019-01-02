@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 def _bs_parse_html(html):
-    return BeautifulSoup(html, "html.parser")
+    return BeautifulSoup(html, "lxml")
 
 
 def soupify(df, is_parallel=True):
