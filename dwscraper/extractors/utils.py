@@ -2,9 +2,11 @@ import logging
 from multiprocessing import Pool
 
 from bs4 import BeautifulSoup
+from tqdm import tqdm
 
 
 logger = logging.getLogger(__name__)
+tqdm.pandas()
 
 
 def _bs_parse_html(html):
@@ -25,6 +27,12 @@ def soupify(df, is_parallel=False):
             soups = list(p.map(_bs_parse_html, df["html"]))
     else:
         logger.info("Serial soupify...")
-        soups = df["html"].apply(_bs_parse_html)
+
+        apply_method_name = ('progress_apply'
+                                if logger.level <= logging.INFO
+                                else 'apply')
+
+        df_apply_method = getattr(df["html"], apply_method_name)
+        soups = df_apply_method(_bs_parse_html)
     
     return soups
