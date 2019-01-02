@@ -6,6 +6,7 @@ import time
 import logging
 import warnings
 import resource
+import itertools
 
 # https://stackoverflow.com/questions/43183367/grequests-with-requests-has-collision
 with warnings.catch_warnings():
@@ -60,6 +61,9 @@ def generate_dw_search_url(rubrik, counter=1000, to=None, **kwargs):
 
 
 def get_dw_urls(rubrik, limit=INF, **kwargs):
+
+    logger.info("Getting URLS of rubrik {} by {}".format(rubrik,
+                                                          kwargs))
 
     urls = set()
     to = None
@@ -122,21 +126,24 @@ def initialize_page_df():
     return page_df
 
 
-def fetch_html(df, n_parallel_requests):
-    logger.info("Retrieving all the pages ({})...".format(len(df)))
-    
-    if n_parallel_requests is None:
-        n_parallel_requests = DEFAULT_NUM_PARALLEL_REQUESTS
+def _fetch_html_serial(urls, already_retrived=None):
+    if already_retrived is None:
+        already_retrived = ()
 
-    logger.debug("n_parallel_requests = {}".format(n_parallel_requests))
-    
-    n_iters = len(df)//n_parallel_requests + 1
+    return [requests.get(DW_URL + url) if not retrived else retrived
+            for url, retrived in itertools.zip_longest(urls,
+                                                       already_retrived,
+                                                       fillvalue=False)]
+
+
+def _fetch_html_parallel(urls, n_parallel_requests):
+    n_iters = len(urls)//n_parallel_requests + 1
     failed_requests = []
     rs = []
 
     pbar = tqdm_is_logged(logger.level <= logging.INFO, total=n_iters)
 
-    for batch in pbar(batches(df["url"], n_parallel_requests)):
+    for batch in pbar(batches(urls, n_parallel_requests)):
         requests_list = [grequests.get(DW_URL + url, stream=False) for url in batch]
         responses = grequests.map(requests_list, exception_handler=exception_handler)
 
@@ -149,14 +156,29 @@ def fetch_html(df, n_parallel_requests):
         rs.extend(responses)
 
 
-    df["request"] = rs
+    return rs
+
+
+def fetch_html(df, n_parallel_requests):
+    logger.info("Retrieving all the pages ({})...".format(len(df)))
+    
+    if n_parallel_requests is None:
+        n_parallel_requests = DEFAULT_NUM_PARALLEL_REQUESTS
+
+    assert n_parallel_requests >= 1
+
+    logger.info("n_parallel_requests = {}".format(n_parallel_requests))
+    
+    if n_parallel_requests > 1:
+        logger.info("Using _fetch_html_parallel...")
+        df["request"] = _fetch_html_parallel(df["url"],
+                                             n_parallel_requests)
+    else:
+        logger.info("Using _fetch_html_serial...")
+        df["request"] = _fetch_html_serial(df["url"])
 
     logger.info("Trying to retrieving failed ones...")
-    df["request"] = df.apply(lambda r:
-                                    r["request"]
-                                    if r["request"] is not None
-                                    else requests.get(DW_URL + r["url"]),
-                                  axis=1)
+    df["request"] = _fetch_html_serial(df["url"], df["request"])
 
     logger.info("Extracting HTML...")
     df["html"] = df.apply(lambda r:
