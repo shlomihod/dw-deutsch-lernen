@@ -17,14 +17,14 @@ def _bs_parse_html(html):
 
 
 def soupify(df, is_parallel=False):
-    logging.info("Instantiating soup objects...")
+    logger.info("Instantiating soup objects...")
 
     if is_parallel:
-        logging.info("Parallel soupify...")
+        logger.info("Parallel soupify...")
         with Pool() as p:
             soups = list(p.map(_bs_parse_html, df["html"]))
     else:
-        logging.info("Serial soupify...")
+        logger.info("Serial soupify...")
         soups = df["html"].apply(_bs_parse_html)
     
     return soups
