@@ -41,7 +41,7 @@ def oncify_newline_spaces(text):
 def save_dataframes(path, page_df, text_df, paragraph_df):
     with pd.HDFStore(os.path.join(path, 'dw.h5')) as dw_store:
         print("Saving page_df...")
-        dw_store["page_df"] = page_df.drop(["soup", "request"], axis=1)
+        dw_store["page_df"] = page_df.drop(["soup"], axis=1)
 
         print("Saving text_df...")
         dw_store["text_df"] = text_df

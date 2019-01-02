@@ -25,7 +25,8 @@ def build_page_df(n_pages=None,
     page_df = fetchers.fetch_html(page_df, n_parallel_requests)
     page_df = page.soupify(page_df)
 
-    page_df = page.enrich_with_lektionen_page_df(page_df)
+    page_df = page.enrich_with_lektionen_page_df(page_df,
+                                                 n_parallel_requests)
 
     page_df = page.extract_artikel(page_df)
 

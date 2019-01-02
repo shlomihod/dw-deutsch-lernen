@@ -85,4 +85,4 @@ with pd.HDFStore('dw.h5') as dw_store:
 
 - [ ] Convert to a Python package
 - [ ] Better documentation of the data frames' columns
-- [ ] Replace grequest with better options for downloading web-pages
+- [ ] Soupify with batches without saving the object itself

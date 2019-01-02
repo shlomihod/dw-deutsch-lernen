@@ -122,41 +122,47 @@ def initialize_page_df():
                     #                "url": list(get_dw_urls("THEMEN",
                     #                                        limit=n_themen))})
 
-
     return page_df
 
 
-def _fetch_html_serial(urls, already_retrived=None):
+def _extract_html(response):
+    return response.content if response.content.strip().endswith(b"</html>") else ''
+
+
+def _fetch_and_extract_html(url):
+    response = requests.get(DW_URL + url)
+    return _extract_html(response)
+
+
+def _fetch_and_extract_html_serial(urls, already_retrived=None):
     if already_retrived is None:
         already_retrived = ()
 
-    return [requests.get(DW_URL + url) if not retrived else retrived
+    return [_fetch_and_extract_html(url) if not retrived else retrived
             for url, retrived in itertools.zip_longest(urls,
                                                        already_retrived,
                                                        fillvalue=False)]
 
-
-def _fetch_html_parallel(urls, n_parallel_requests):
+def _fetch_html_and_extract_parallel(urls, n_parallel_requests):
     n_iters = len(urls)//n_parallel_requests + 1
     failed_requests = []
-    rs = []
+    html = []
 
     pbar = tqdm_is_logged(logger.level <= logging.INFO, total=n_iters)
 
     for batch in pbar(batches(urls, n_parallel_requests)):
         requests_list = [grequests.get(DW_URL + url, stream=False) for url in batch]
         responses = grequests.map(requests_list, exception_handler=exception_handler)
+        
+        html.extend([_extract_html(response) for response in responses])
 
-        for response in responses:
-            if response is None:
-                continue
-            if response.status_code != 200:
-                failed_requests.append(response.text)
+        failed_requests = [response.text for response in responses
+                           if response is not None and response.status_code != 200]
 
-        rs.extend(responses)
+    if failed_requests:
+        logger.info("Number of failed requests: {}".format(len(failed_requests)))
 
-
-    return rs
+    return html
 
 
 def fetch_html(df, n_parallel_requests):
@@ -170,23 +176,15 @@ def fetch_html(df, n_parallel_requests):
     logger.info("n_parallel_requests = {}".format(n_parallel_requests))
     
     if n_parallel_requests > 1:
-        logger.info("Using _fetch_html_parallel...")
-        df["request"] = _fetch_html_parallel(df["url"],
+        logger.info("Using _fetch_html_and_extract_parallel...")
+        df["html"] = _fetch_html_and_extract_parallel(df["url"],
                                              n_parallel_requests)
     else:
-        logger.info("Using _fetch_html_serial...")
-        df["request"] = _fetch_html_serial(df["url"])
+        logger.info("Using _fetch_and_extract_html_serial...")
+        df["html"] = _fetch_and_extract_html_serial(df["url"])
 
     logger.info("Trying to retrieving failed ones...")
-    df["request"] = _fetch_html_serial(df["url"], df["request"])
-
-    logger.info("Extracting HTML...")
-    df["html"] = df.apply(lambda r:
-                                    r["request"].content
-                                    if r["request"].content.strip().endswith(b"</html>")
-                                    else requests.get(DW_URL + r["url"]).content,
-                                  axis=1)
-
+    df["html"] = _fetch_and_extract_html_serial(df["url"], df["html"])
 
     is_full_html_mask = df["html"].str.strip().str.endswith(b"</html>")
     df = df[is_full_html_mask]

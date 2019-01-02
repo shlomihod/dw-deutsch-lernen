@@ -24,7 +24,8 @@ THEMENSEITEN_RE = re.compile(r"/de/\w+/t-\d+")
 logger = logging.getLogger(__name__)
 
 
-def enrich_with_lektionen_page_df(df):
+def enrich_with_lektionen_page_df(df,
+                                  n_parallel_requests=None):
     logging.info("Enriching with LEKTIONEN pages...")
     lektion = df["soup"].apply(lambda soup: soup.find("span", string="Lektion"))
     if (~lektion.isnull()).any():
@@ -32,7 +33,7 @@ def enrich_with_lektionen_page_df(df):
         lektion = lektion.dropna()
         lektion_page_df = build_initial_page_df("LEKTIONEN",
                                 list(lektion.apply(lambda tag: tag.parent.parent["href"])))
-        lektion_page_df = fetch_html(lektion_page_df)
+        lektion_page_df = fetch_html(lektion_page_df, n_parallel_requests)
         lektion_page_df = soupify(lektion_page_df)
 
         return pd.concat([df, lektion_page_df])
