@@ -86,3 +86,4 @@ with pd.HDFStore('dw.h5') as dw_store:
 - [ ] Convert to a Python package
 - [ ] Better documentation of the data frames' columns
 - [ ] Soupify with batches without saving the object itself
+- [ ] Checkout the new "lektion" (e.g., /de/mit-herz-gegen-hass/l-36014004)
